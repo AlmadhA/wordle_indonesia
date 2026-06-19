@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordle Indonesia - Special Edition</title>
+    <style>
+        :root {
+            --color-correct: #6aaa64;
+            --color-present: #c9b458;
+            --color-absent: #787c7e;
+            --color-border: #d3d6da;
+            --background: #ffffff;
+            --text-color: #000000;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        /* SCREEN 1: WELCOME POPUP */
+        #welcome-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #121213;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .welcome-box {
+            text-align: center;
+            background: #1a1a1a;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            border: 1px solid #333;
+        }
+
+        .welcome-box h1 { margin-bottom: 10px; color: var(--color-correct); }
+        .welcome-box p { font-size: 1.2rem; margin-bottom: 30px; }
+
+        .btn-choice {
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: transform 0.1s;
+        }
+        .btn-choice:active { transform: scale(0.95); }
+        #btn-yes { background-color: var(--color-correct); color: white; }
+        #btn-no { background-color: #e03c3c; color: white; }
+
+        /* SCREEN 2: GAME WORDLE */
+        #main-game {
+            display: none; /* Muncul setelah klik Yes */
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        header {
+            border-bottom: 1px solid var(--color-border);
+            width: 100%;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        #game-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            max-width: 500px;
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        #board {
+            display: grid;
+            grid-template-rows: repeat(6, 1fr);
+            grid-gap: 5px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+
+        .row { display: grid; grid-template-columns: repeat(5, 1fr); grid-gap: 5px; }
+
+        .tile {
+            width: 52px; height: 52px;
+            border: 2px solid var(--color-border);
+            display: inline-flex; justify-content: center; align-items: center;
+            font-size: 1.8rem; font-weight: bold; text-transform: uppercase;
+            box-sizing: border-box; transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .tile[data-state="correct"] { background-color: var(--color-correct); border-color: var(--color-correct); color: white; }
+        .tile[data-state="present"] { background-color: var(--color-present); border-color: var(--color-present); color: white; }
+        .tile[data-state="absent"] { background-color: var(--color-absent); border-color: var(--color-absent); color: white; }
+
+        #keyboard { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 6px; }
+        .key-row { display: flex; justify-content: center; gap: 5px; width: 100%; }
+        
+        .key {
+            background-color: #e5e5e5; border: 0; padding: 0; height: 55px;
+            flex-grow: 1; border-radius: 4px; cursor: pointer;
+            font-weight: bold; font-size: 1.1rem; display: flex;
+            justify-content: center; align-items: center; text-transform: uppercase;
+        }
+        .key.wide { flex-grow: 1.5; font-size: 0.85rem; }
+
+        #reset-btn {
+            margin-top: 15px; background-color: #2196F3; color: white;
+            border: none; padding: 10px 25px; font-size: 0.95rem;
+            font-weight: bold; border-radius: 4px; cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #reset-btn:hover { background-color: #1976D2; }
+
+        #message {
+            position: absolute; top: 12%; background-color: #333; color: white;
+            padding: 10px 20px; border-radius: 5px; font-weight: bold;
+            z-index: 10; opacity: 0; transition: opacity 0.2s ease-in-out; pointer-events: none;
+        }
+
+        /* SCREEN 3: BLUE SCREEN SURPRISE (BSOD) */
+        #bsod-screen {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #0078d7;
+            color: white;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            padding: 10% 15%;
+            box-sizing: border-box;
+            z-index: 200;
+            cursor: none; /* Sembunyikan kursor agar lebih panik */
+        }
+
+        #bsod-screen .sad-face { font-size: 8rem; margin: 0; font-weight: 300; }
+        #bsod-screen h2 { font-size: 2rem; font-weight: 400; margin: 20px 0; line-height: 1.4; }
+        #bsod-screen p { font-size: 1.1rem; line-height: 1.6; max-width: 800px; color: #f0f0f0; }
+        #bsod-screen .info-section { margin-top: 40px; display: flex; gap: 30px; font-size: 0.95rem; }
+        #bsod-screen .qr-dummy { width: 90px; height: 90px; background-color: white; border: 4px solid white; display:flex; align-items:center; justify-content:center; color: black; font-weight:bold; font-size:0.7rem; text-align:center;}
+    </style>
+</head>
+<body>
+
+    <!-- SCREEN 1: PERTANYAAN AWAL -->
+    <div id="welcome-overlay">
+        <div class="welcome-box">
+            <h1>WORDLE INDONESIA</h1>
+            <p>Are You Ready?</p>
+            <button class="btn-choice" id="btn-yes" onclick="startGame()">YES</button>
+            <button class="btn-choice" id="btn-no" onclick="closePage()">NO</button>
+        </div>
+    </div>
+
+    <!-- SCREEN 2: GAMEPLAY UTAMA -->
+    <div id="main-game">
+        <header>WORDLE INDONESIA</header>
+        <div id="message">Pesan</div>
+
+        <div id="game-container">
+            <div id="board"></div>
+            <div id="keyboard"></div>
+            <button id="reset-btn" onclick="resetGame()">Play Again 🔄</button>
+        </div>
+    </div>
+
+    <!-- SCREEN 3: KEJUTAN BLUE SCREEN CRASH (BSOD) -->
+    <div id="bsod-screen" onclick="exitBsod()">
+        <div class="sad-face">:(</div>
+        <h2>Perangkat Anda mengalami masalah dan harus dimulai ulang. Kami hanya mengumpulkan beberapa informasi kesalahan, lalu kami akan memulai ulang untuk Anda.</h2>
+        <p><span id="progress-text">0</span>% lengkap</p>
+        
+        <div class="info-section">
+            <div class="qr-dummy">WORDLE<br>CRASH</div>
+            <div>
+                <p style="margin: 0;">Untuk informasi lebih lanjut tentang masalah ini dan perbaikan yang mungkin, kunjungi:</p>
+                <p style="margin: 5px 0 0 0; font-weight: bold; color: white;">https://github.com/kamu/wordle-indonesia</p>
+                <p style="margin: 15px 0 0 0; font-size: 0.85rem; color: #d0d0d0;">Jika Anda menghubungi orang dukungan, beri tahu mereka info ini:<br>
+                Kode Hentian: <span id="bsod-answer" style="font-weight: bold; color: white;">TEBAKAN_ANDA_SALAH</span><br>
+                Hal yang gagal: wordle_core.sys (Error_Row_6_Reached)</p>
+                <p style="margin-top: 20px; font-size: 0.8rem; color: #a0a0a0; font-style: italic;">(Klik di mana saja pada layar untuk kembali ke game)</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DAFTAR KATA BAKU KBBI (5 HURUF)
+        const WORD_LIST = [
+            "SINAR", "HITAM", "BOSAN", "MAKAN", "RETAK", "PUTIH", "SURYA", "KABUR", "PINTU", "LAMPU", "GUSTI", "WAKTU", "CERITA",
+            "ABADI", "ABANG", "ABJAD", "ABSEN", "ACARA", "ACUAN", "ADALAH", "ADMIN", "AGAMA", "AGUNG", "AKHIR", "AKIBAT", "AKSES", 
+            "AKTIF", "AKTOR", "ALAMI", "ALARM", "ALBUM", "ALIBI", "ALIRAN", "ALTAR", "ALUMNI", "AMBIL", "AMBON", "AMPUH", "AMPUN", 
+            "ANGIN", "ANGKA", "ANTAR", "ANTIK", "ANTRE", "APRIL", "APUNG", "AREAL", "ARENA", "AROMA", "ARSIP", "ARTIS", "ARWAH", 
+            "ASING", "ASPAL", "ASPEK", "ASRAMA", "ASET", "ATLAS", "ATLET", "AUDIO", "AUDIT", "AULIA", "AURORA", "AUTIS", "BABAK", 
+            "BADAI", "BADAK", "BADAN", "BADUT", "BAGAI", "BAGAN", "BAGUS", "BAHAN", "BAHAS", "BAHAYA", "BAJAK", "BAJAK", "BAKTI", 
+            "BALAI", "BALAP", "BALAS", "BALIK", "BALOK", "BALON", "BAMBU", "BANAL", "BANDAR", "BANDO", "BANGSA", "BANGUN", "BANJIR", 
+            "BANTAL", "BANTU", "BANYAK", "BAPAK", "BARAK", "BARAT", "BARET", "BARIS", "BARON", "BASAH", "BASIS", "BASMI", "BASUH", 
+            "BATAK", "BATAL", "BATANG", "BATAS", "BATIK", "BATIN", "BATUK", "BAYAM", "BAYAR", "BEBAS", "BEBAN", "BECEK", "BEDAK", 
+            "BEDUG", "BEJANA", "BEKAL", "BEKAS", "BEKUK", "BELAH", "BELAI", "BELAS", "BELUT", "BENAK", "BENAM", "BENANG", "BENAR", 
+            "BENCI", "BENDA", "BENIH", "BENING", "BENSIN", "BENTUK", "BERAS", "BERAT", "BERES", "BESAR", "BESOK", "BETAH", "BETIS", 
+            "BETON", "BETUL", "BIAYA", "BIBIR", "BIBIT", "BICARA", "BIDAK", "BIDAN", "BIDIK", "BIJAK", "BIKIN", "BILAS", "BILIK", 
+            "BINER", "BIOLA", "BIOTA", "BISIK", "BISNIS", "BOBOK", "BOBOT", "BOCAH", "BOCOR", "BODOH", "BOGOR", "BOIKOT", "BOLEH", 
+            "BOLOS", "BONUS", "BORAX", "BOROK", "BOROS", "BOTAK", "BOTOL", "BRUTO", "BUANA", "BUANG", "BUAYA", "BUBAR", "BUBUR", 
+            "BUDAK", "BUDAYA", "BUGAR", "BUGIS", "BUJUR", "BUKAN", "BUKTI", "BUKUM", "BULAN", "BULAT", "BUMBU", "BUMIP", "BUNGA", 
+            "BUNUH", "BUNYI", "BURAM", "BURSA", "BURUH", "BURUK", "BURUNG", "BUSUK", "BUSUR", "BUTIK", "BUTIR", "BUTUH", "BUYUT",
+            "CABAI", "CABUT", "CACAH", "CACAR", "CACAT", "CADAR", "CADAS", "CAGAK", "CAGAR", "CAHAYA", "CAIRAN", "CAKAP", "CAKAR", 
+            "CAKRA", "CALON", "CAMAT", "CAMPUR", "CANDI", "CANDU", "CANTIK", "CAPAI", "CAPEK", "CATAT", "CATUR", "CAWAN", "CEBOL", 
+            "CEBUR", "CECAK", "CEDERA", "CEGAH", "CEKIK", "CELAH", "CELAK", "CELANA", "CELUP", "CEMAR", "CEMAS", "CEPAT", "CERAH", 
+            "CERAI", "CERDIK", "CERNA", "CERITA", "CETAK", "CETEK", "CETUS", "CICIL", "CICIP", "CINCIN", "CINTA", "CIPTA", "CITRA", 
+            "COBAAN", "COCOK", "COLEK", "COLOK", "COPET", "COPOT", "CORAK", "CORET", "CORONG", "COWOK", "CUACA", "CUBIT", "CUCIAN", 
+            "CUCUK", "CUCUR", "CUKAI", "CUKUP", "CUKUR", "CUMAAN", "CURUT", "CUNAM", "CUPAK", "CURAH", "CURAM", "CURANG", "CULAS", 
+            "DADAK", "DADAR", "DAGING", "DAERAH", "DAFTAR", "DAGING", "DAHAK", "DAHAN", "DAHULU", "DANAU", "DAMAI", "DAMAR", "DAMPAK", 
+            "DANAU", "DAPAT", "DAPUR", "DARAH", "DARAT", "DARURAT", "DASAR", "DATANG", "DATAR", "DATUK", "DAUNAN", "DAWAI", "DOYAN", 
+            "DAYAK", "DAYUNG", "DEBAT", "DEBIT", "DEBUK", "DEBUR", "DEBUS", "DEFIK", "DEKAP", "DEKAT", "DEKOR", "DEKRET", "DELIK", 
+            "DEMAM", "DEMI-", "DENAH", "DENDA", "DENGAN", "DENGAR", "DEPAN", "DERAJAT", "DERAK", "DERAP", "DERAS", "DERET", "DERITA", 
+            "DESAH", "DESAK", "DESAIN", "DESAR", "DESER", "DESIR", "DETAK", "DETAIL", "DETIK", "DEWA-", "DEWAN", "DEWASA", "DINAR", 
+            "DIAN-", "DIDIK", "DINDING", "DINGIN", "DINAS", "DIPLOM", "DISKO", "DISKON", "DISKUS", "DISRE", "DIVISI", "DOAAN", "DODOL"
+        ];
+        
+        let secretWord = "";
+        let currentRow = 0;
+        let currentTile = 0;
+        let gameOver = false;
+
+        const board = document.getElementById("board");
+        const keyboard = document.getElementById("keyboard");
+        const messageEl = document.getElementById("message");
+
+        // FUNGSI SCREEN 1
+        function startGame() {
+            document.getElementById("welcome-overlay").style.display = "none";
+            document.getElementById("main-game").style.display = "flex";
+            initGame();
+        }
+
+        function closePage() {
+            // Browser modern memblokir window.close() kecuali tab dibuka via script.
+            // Sebagai gantinya, kita ubah halamannya menjadi teks penolakan yang bersih.
+            document.getElementById("welcome-overlay").innerHTML = `
+                <div class="welcome-box">
+                    <h2 style="color:#e03c3c;">Akses Ditolak</h2>
+                    <p>Halaman ditutup karena Anda belum siap mental. Silakan kembali lagi nanti.</p>
+                </div>`;
+        }
+
+        // INIT GAME LOGIC
+        function initGame() {
+            secretWord = WORD_LIST[Math.floor(Math.random() * WORD_LIST.length)].toUpperCase();
+            board.innerHTML = "";
+            keyboard.innerHTML = "";
+
+            // Generate Board
+            for (let i = 0; i < 6; i++) {
+                const row = document.createElement("div");
+                row.className = "row";
+                for (let j = 0; j < 5; j++) {
+                    const tile = document.createElement("div");
+                    tile.className = "tile";
+                    row.appendChild(tile);
+                }
+                board.appendChild(row);
+            }
+
+            // Generate Keyboard
+            const keys = [
+                ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+                ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
+                ["ENTER", "Z", "X", "C", "V", "B", "N", "M", "HAPUS"]
+            ];
+
+            keys.forEach(row => {
+                const keyRow = document.createElement("div");
+                keyRow.className = "key-row";
+                row.forEach(key => {
+                    const button = document.createElement("button");
+                    button.textContent = key;
+                    button.className = "key";
+                    if (key === "ENTER" || key === "HAPUS") button.classList.add("wide");
+                    button.addEventListener("click", () => handleInput(key));
+                    keyRow.appendChild(button);
+                });
+                keyboard.appendChild(keyRow);
+            });
+        }
+
+        // HANDLE INPUT
+        function handleInput(key) {
+            if (gameOver) return;
+
+            const rows = board.getElementsByClassName("row");
+            const tiles = rows[currentRow].getElementsByClassName("tile");
+
+            if (key === "HAPUS" || key === "Backspace") {
+                if (currentTile > 0) {
+                    currentTile--;
+                    tiles[currentTile].textContent = "";
+                }
+            } else if (key === "ENTER" || key === "Enter") {
+                if (currentTile === 5) {
+                    checkWord(tiles);
+                } else {
+                    showMessage("Not enough letters!");
+                }
+            } else if (/^[a-zA-Z]$/.test(key)) {
+                if (currentTile < 5) {
+                    tiles[currentTile].textContent = key.toUpperCase();
+                    currentTile++;
+                }
+            }
+        }
+
+        window.addEventListener("keydown", (e) => handleInput(e.key));
+
+        // CHECK WORD LOGIC
+        function checkWord(tiles) {
+            let guess = "";
+            for (let i = 0; i < 5; i++) { guess += tiles[i].textContent; }
+
+            let target = secretWord;
+            
+            for (let i = 0; i < 5; i++) {
+                let letter = guess[i];
+                if (target[i] === letter) {
+                    tiles[i].setAttribute("data-state", "correct");
+                } else if (target.includes(letter)) {
+                    tiles[i].setAttribute("data-state", "present");
+                } else {
+                    tiles[i].setAttribute("data-state", "absent");
+                }
+            }
+
+            if (guess === secretWord) {
+                showMessage("You Win! 🎉");
+                gameOver = true;
+                return;
+            }
+
+            // JIKA KALAH (MENCAPAI ROW KE-6)
+            if (currentRow === 5) {
+                gameOver = true;
+                triggerBsod();
+                return;
+            }
+
+            currentRow++;
+            currentTile = 0;
+        }
+
+	// TRIGGER BLUE SCREEN OF DEATH (BSOD) + FORCE FULLSCREEN
+        function triggerBsod() {
+            document.getElementById("bsod-answer").textContent = `KATA_KUNCI_ADALAH_${secretWord}`;
+            const bsodScreen = document.getElementById("bsod-screen");
+            bsodScreen.style.display = "block";
+
+            // MENYALA KAN MODE FULL SCREEN TOTAL
+            const docEl = document.documentElement;
+            if (docEl.requestFullscreen) {
+                docEl.requestFullscreen();
+            } else if (docEl.webkitRequestFullscreen) { /* Safari */
+                docEl.webkitRequestFullscreen();
+            } else if (docEl.msRequestFullscreen) { /* IE11 */
+                docEl.msRequestFullscreen();
+            }
+
+            // Animasi hitungan persen palsu
+            let progress = 0;
+            const progressText = document.getElementById("progress-text");
+            const interval = setInterval(() => {
+                progress += Math.floor(Math.random() * 20) + 5;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                }
+                progressText.textContent = progress;
+            }, 400);
+        }
+
+        // KELUAR DARI BSOD & MATIKAN FULLSCREEN
+        function exitBsod() {
+            // Matikan mode fullscreen jika sedang aktif
+            if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+
+            document.getElementById("bsod-screen").style.display = "none";
+            resetGame();
+        }
+
+        function resetGame() {
+            currentRow = 0;
+            currentTile = 0;
+            gameOver = false;
+            initGame();
+            showMessage("Game Restart! Good Luck! 🚀");
+        }
+
+        function showMessage(msg) {
+            messageEl.textContent = msg;
+            messageEl.style.opacity = 1;
+            setTimeout(() => messageEl.style.opacity = 0, 2500);
+        }
+    </script>
+</body>
+</html>
