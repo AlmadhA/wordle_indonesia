@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,6 +12,7 @@
             --color-border: #d3d6da;
             --background: #ffffff;
             --text-color: #000000;
+            --gold: #ffd700;
         }
 
         body {
@@ -26,6 +27,44 @@
             user-select: none;
             overflow: hidden;
         }
+
+        /* LIVE GLOBAL LEADERBOARD TOP 10 (TOP RIGHT CORNER) */
+        .global-leaderboard {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid var(--gold);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            z-index: 250;
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.2);
+            max-width: 220px;
+            max-height: 70vh;
+            overflow-y: auto;
+            color: white;
+        }
+        .global-leaderboard h3 {
+            margin: 0 0 6px 0;
+            color: var(--gold);
+            font-size: 0.85rem;
+            text-align: center;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 6px;
+        }
+        .leaderboard-list { list-style: none; margin: 0; padding: 0; }
+        .leaderboard-list li {
+            display: flex; justify-content: space-between; gap: 8px;
+            padding: 3px 0; color: #ddd; white-space: nowrap;
+        }
+        .leaderboard-list li .rank { color: var(--gold); font-weight: bold; min-width: 20px; }
+        .leaderboard-list li .lb-name { flex-grow: 1; overflow: hidden; text-overflow: ellipsis; text-align: left; padding: 0 6px; }
+        .leaderboard-list li .lb-score { color: #4cd964; font-weight: bold; }
+        .leaderboard-list li.is-you { background: rgba(106,170,100,0.25); border-radius: 4px; }
+        .leaderboard-empty { color: #888; text-align: center; padding: 6px 0; font-size: 0.75rem; }
+        .leaderboard-error { color: #ff6b6b; text-align: center; padding: 6px 0; font-size: 0.72rem; line-height: 1.3; }
 
         /* SCREEN 1: WELCOME POPUP */
         #welcome-overlay {
@@ -52,6 +91,13 @@
         .welcome-box h1 { margin-bottom: 10px; color: var(--color-correct); }
         .welcome-box p { font-size: 1.2rem; margin-bottom: 30px; }
 
+        .input-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 20px; text-align: left; }
+        .input-group label { font-size: 0.85rem; color: #aaa; font-weight: bold; }
+        .input-group input[type="text"] {
+            padding: 10px; background: #2a2a2a; color: white;
+            border: 1px solid #444; border-radius: 5px; font-size: 1rem; outline: none;
+        }
+
         .btn-choice {
             padding: 12px 30px;
             font-size: 1.1rem;
@@ -68,7 +114,7 @@
 
         /* SCREEN 2: GAME WORDLE */
         #main-game {
-            display: none; /* Muncul setelah klik Yes */
+            display: none; /* Appears after clicking Yes */
             flex-direction: column;
             align-items: center;
             width: 100%;
@@ -155,7 +201,7 @@
             padding: 10% 15%;
             box-sizing: border-box;
             z-index: 200;
-            cursor: none; /* Sembunyikan kursor agar lebih panik */
+            cursor: none; /* Hide cursor for more panic */
         }
 
         #bsod-screen .sad-face { font-size: 8rem; margin: 0; font-weight: 300; }
@@ -167,20 +213,32 @@
 </head>
 <body>
 
-    <!-- SCREEN 1: PERTANYAAN AWAL -->
+    <!-- LIVE GLOBAL LEADERBOARD TOP 10 -->
+    <div class="global-leaderboard">
+        <h3>🏆 TOP 10 Leaderboard</h3>
+        <ol class="leaderboard-list" id="leaderboard-list">
+            <li class="leaderboard-empty">Loading Data ...</li>
+        </ol>
+    </div>
+
+    <!-- SCREEN 1: INITIAL QUESTION -->
     <div id="welcome-overlay">
         <div class="welcome-box">
             <h1>WORDLE INDONESIA</h1>
             <p>Are You Ready?</p>
+            <div class="input-group">
+                <label for="player-name-input">Your Name:</label>
+                <input type="text" id="player-name-input" placeholder="Enter your name..." autocomplete="off">
+            </div>
             <button class="btn-choice" id="btn-yes" onclick="startGame()">YES</button>
             <button class="btn-choice" id="btn-no" onclick="closePage()">NO</button>
         </div>
     </div>
 
-    <!-- SCREEN 2: GAMEPLAY UTAMA -->
+    <!-- SCREEN 2: MAIN GAMEPLAY -->
     <div id="main-game">
         <header>WORDLE INDONESIA</header>
-        <div id="message">Pesan</div>
+        <div id="message">Message</div>
 
         <div id="game-container">
             <div id="board"></div>
@@ -189,26 +247,40 @@
         </div>
     </div>
 
-    <!-- SCREEN 3: KEJUTAN BLUE SCREEN CRASH (BSOD) -->
+    <!-- SCREEN 3: BLUE SCREEN CRASH SURPRISE (BSOD) -->
     <div id="bsod-screen" onclick="exitBsod()">
         <div class="sad-face">:(</div>
-        <h2>Perangkat Anda mengalami masalah dan harus dimulai ulang. Kami hanya mengumpulkan beberapa informasi kesalahan, lalu kami akan memulai ulang untuk Anda.</h2>
-        <p><span id="progress-text">0</span>% lengkap</p>
+        <h2>Your device ran into a problem and needs to restart. We're just collecting some error info, and then we'll restart for you.</h2>
+        <p><span id="progress-text">0</span>% complete</p>
         
         <div class="info-section">
             <div class="qr-dummy">WORDLE<br>CRASH</div>
             <div>
-                <p style="margin: 0;">Untuk informasi lebih lanjut tentang masalah ini dan perbaikan yang mungkin, kunjungi:</p>
+                <p style="margin: 0;">For more information about this issue and possible fixes, visit:</p>
                 <p style="margin: 5px 0 0 0; font-weight: bold; color: white;">https://github.com/kamu/wordle-indonesia</p>
-                <p style="margin: 15px 0 0 0; font-size: 0.85rem; color: #d0d0d0;">Jika Anda menghubungi orang dukungan, beri tahu mereka info ini:<br>
-                Kode Hentian: <span id="bsod-answer" style="font-weight: bold; color: white;">TEBAKAN_ANDA_SALAH</span><br>
-                Hal yang gagal: wordle_core.sys (Error_Row_6_Reached)</p>
-                <p style="margin-top: 20px; font-size: 0.8rem; color: #a0a0a0; font-style: italic;">(Klik di mana saja pada layar untuk kembali ke game)</p>
+                <p style="margin: 15px 0 0 0; font-size: 0.85rem; color: #d0d0d0;">If you call a support person, give them this info:<br>
+                Stop Code: <span id="bsod-answer" style="font-weight: bold; color: white;">YOUR_GUESS_WAS_WRONG</span><br>
+                What failed: wordle_core.sys (Error_Row_6_Reached)</p>
+                <p style="margin-top: 20px; font-size: 0.8rem; color: #a0a0a0; font-style: italic;">(Click anywhere on the screen to return to the game)</p>
             </div>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <script>
+        // SUPABASE CREDENTIALS DIRECT CONNECTION
+        const SUPABASE_URL = "https://eqfimiakzjmsighcptyk.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_6KMxDxSO7BqIUqAkGpZOQw_pIaNxEK8";
+        // Nama variabel "supabaseClient" dipakai (bukan "supabase") agar tidak menimpa
+        // objek global "supabase" yang berasal dari CDN library di atas.
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const LEADERBOARD_TABLE = "leaderboard_wordle";
+
+        // LEADERBOARD INDEPENDENT VARIABLES
+        let currentPlayerName = "Anonymous";
+        let cachedLeaderboard = []; // stores the latest fetched top 10
+
         // DAFTAR KATA BAKU KBBI (5 HURUF)
         const WORD_LIST = [
             "SINAR", "HITAM", "BOSAN", "MAKAN", "RETAK", "PUTIH", "SURYA", "KABUR", "PINTU", "LAMPU", "GUSTI", "WAKTU", "CERITA",
@@ -250,20 +322,131 @@
         const keyboard = document.getElementById("keyboard");
         const messageEl = document.getElementById("message");
 
+        // LOAD TOP 10 LEADERBOARD DATA WHEN PAGE FIRST OPENS
+        window.addEventListener("DOMContentLoaded", () => {
+            ambilTopSkorGlobal();
+        });
+
+        // =====================================================================
+        // LEADERBOARD TOP 10
+        // =====================================================================
+        async function ambilTopSkorGlobal() {
+            const listEl = document.getElementById("leaderboard-list");
+            try {
+                const { data, error } = await supabaseClient
+                    .from(LEADERBOARD_TABLE)
+                    .select('name, score')
+                    .order('score', { ascending: false })
+                    .limit(10);
+
+                if (error) throw error;
+
+                cachedLeaderboard = data || [];
+                renderLeaderboard();
+            } catch (err) {
+                console.error("Failed to pull Leaderboard data:", err.message);
+                listEl.innerHTML = `<li class="leaderboard-error">Failed to load: ${err.message}</li>`;
+            }
+        }
+
+        function renderLeaderboard() {
+            const listEl = document.getElementById("leaderboard-list");
+
+            if (!cachedLeaderboard || cachedLeaderboard.length === 0) {
+                listEl.innerHTML = `<li class="leaderboard-empty">No data yet</li>`;
+                return;
+            }
+
+            listEl.innerHTML = cachedLeaderboard.map((row, i) => {
+                const isYou = row.name === currentPlayerName ? "is-you" : "";
+                const scoreVal = parseFloat(row.score);
+                return `<li class="${isYou}">
+                            <span class="rank">#${i + 1}</span>
+                            <span class="lb-name">${escapeHtml(row.name)}</span>
+                            <span class="lb-score">${scoreVal} pts</span>
+                        </li>`;
+            }).join("");
+        }
+
+        // Simple sanitization so player names don't break the HTML
+        function escapeHtml(str) {
+            const div = document.createElement("div");
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        async function tambahkanSkorGlobal(pointsEarned) {
+            try {
+                // 1. Cek apakah nama ini sudah ada skornya di database
+                const { data: existing, error: fetchError } = await supabaseClient
+                    .from(LEADERBOARD_TABLE)
+                    .select('name, score')
+                    .eq('name', currentPlayerName)
+                    .maybeSingle();
+
+                if (fetchError) throw fetchError;
+
+                let newTotalScore;
+
+                if (existing) {
+                    // 2a. Nama sudah ada -> tambahkan poin baru ke skor lama (UPDATE)
+                    newTotalScore = parseFloat(existing.score) + pointsEarned;
+                    const { error: updateError } = await supabaseClient
+                        .from(LEADERBOARD_TABLE)
+                        .update({ score: newTotalScore })
+                        .eq('name', currentPlayerName);
+
+                    if (updateError) throw updateError;
+                } else {
+                    // 2b. Nama belum ada -> buat baris baru (INSERT)
+                    newTotalScore = pointsEarned;
+                    const { error: insertError } = await supabaseClient
+                        .from(LEADERBOARD_TABLE)
+                        .insert([{ name: currentPlayerName, score: newTotalScore }]);
+
+                    if (insertError) throw insertError;
+                }
+
+                // Cek apakah skor total ini masuk Top 10 saat ini (berdasarkan cache lokal)
+                let lowestInTop10 = cachedLeaderboard.length >= 10
+                    ? parseFloat(cachedLeaderboard[cachedLeaderboard.length - 1].score)
+                    : -1;
+                let masukTop10 = cachedLeaderboard.length < 10 || newTotalScore > lowestInTop10;
+
+                if (masukTop10) {
+                    alert(`🏆 +${pointsEarned} points! ${currentPlayerName} now has a total score of ${newTotalScore} and is on the TOP 10 LEADERBOARD!`);
+                } else {
+                    alert(`+${pointsEarned} points! ${currentPlayerName}'s total score is now ${newTotalScore}.`);
+                }
+
+                await ambilTopSkorGlobal(); // Refresh tampilan leaderboard top 10
+            } catch (err) {
+                console.error("Failed to update score data:", err.message);
+                alert(`Failed to save your score: ${err.message}`);
+            }
+        }
+
         // FUNGSI SCREEN 1
         function startGame() {
+            let nameInput = document.getElementById("player-name-input").value.trim();
+            if (!nameInput) {
+                alert("Please enter your name before starting!");
+                return;
+            }
+            currentPlayerName = nameInput;
+
             document.getElementById("welcome-overlay").style.display = "none";
             document.getElementById("main-game").style.display = "flex";
             initGame();
         }
 
         function closePage() {
-            // Browser modern memblokir window.close() kecuali tab dibuka via script.
-            // Sebagai gantinya, kita ubah halamannya menjadi teks penolakan yang bersih.
+            // Modern browsers block window.close() unless the tab was opened via script.
+            // Instead, we change the page into a clean rejection message.
             document.getElementById("welcome-overlay").innerHTML = `
                 <div class="welcome-box">
-                    <h2 style="color:#e03c3c;">Akses Ditolak</h2>
-                    <p>Halaman ditutup karena Anda belum siap mental. Silakan kembali lagi nanti.</p>
+                    <h2 style="color:#e03c3c;">Access Denied</h2>
+                    <p>Page closed because you're not mentally ready yet. Please come back another time.</p>
                 </div>`;
         }
 
@@ -289,7 +472,7 @@
             const keys = [
                 ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
                 ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
-                ["ENTER", "Z", "X", "C", "V", "B", "N", "M", "HAPUS"]
+                ["ENTER", "Z", "X", "C", "V", "B", "N", "M", "DELETE"]
             ];
 
             keys.forEach(row => {
@@ -299,7 +482,7 @@
                     const button = document.createElement("button");
                     button.textContent = key;
                     button.className = "key";
-                    if (key === "ENTER" || key === "HAPUS") button.classList.add("wide");
+                    if (key === "ENTER" || key === "DELETE") button.classList.add("wide");
                     button.addEventListener("click", () => handleInput(key));
                     keyRow.appendChild(button);
                 });
@@ -314,7 +497,7 @@
             const rows = board.getElementsByClassName("row");
             const tiles = rows[currentRow].getElementsByClassName("tile");
 
-            if (key === "HAPUS" || key === "Backspace") {
+            if (key === "DELETE" || key === "Backspace") {
                 if (currentTile > 0) {
                     currentTile--;
                     tiles[currentTile].textContent = "";
@@ -354,14 +537,21 @@
             }
 
             if (guess === secretWord) {
-                showMessage("You Win! 🎉");
                 gameOver = true;
+                // Skor poin tetap berdasarkan percobaan ke berapa pemain menang.
+                // currentRow 0-5 (0 = row pertama/percobaan ke-1, 5 = row terakhir/percobaan ke-6)
+                // Percobaan 1 = 60pt, 2 = 50pt, 3 = 40pt, 4 = 30pt, 5 = 20pt, 6 = 10pt
+                let attemptsUsed = currentRow + 1; // 1 sampai 6
+                let pointsEarned = (7 - attemptsUsed) * 10; // 60..10
+                showMessage("You Win! 🎉");
+                tambahkanSkorGlobal(pointsEarned);
                 return;
             }
 
             // JIKA KALAH (MENCAPAI ROW KE-6)
             if (currentRow === 5) {
                 gameOver = true;
+                // Kalah = tidak ada poin ditambahkan, tapi leaderboard tetap di-refresh
                 triggerBsod();
                 return;
             }
@@ -372,11 +562,11 @@
 
 	// TRIGGER BLUE SCREEN OF DEATH (BSOD) + FORCE FULLSCREEN
         function triggerBsod() {
-            document.getElementById("bsod-answer").textContent = `KATA_KUNCI_ADALAH_${secretWord}`;
+            document.getElementById("bsod-answer").textContent = `THE_ANSWER_WAS_${secretWord}`;
             const bsodScreen = document.getElementById("bsod-screen");
             bsodScreen.style.display = "block";
 
-            // MENYALA KAN MODE FULL SCREEN TOTAL
+            // TURN ON FULL SCREEN MODE
             const docEl = document.documentElement;
             if (docEl.requestFullscreen) {
                 docEl.requestFullscreen();
@@ -386,7 +576,7 @@
                 docEl.msRequestFullscreen();
             }
 
-            // Animasi hitungan persen palsu
+            // Fake progress percentage animation
             let progress = 0;
             const progressText = document.getElementById("progress-text");
             const interval = setInterval(() => {
@@ -399,9 +589,9 @@
             }, 400);
         }
 
-        // KELUAR DARI BSOD & MATIKAN FULLSCREEN
+        // EXIT BSOD & TURN OFF FULLSCREEN
         function exitBsod() {
-            // Matikan mode fullscreen jika sedang aktif
+            // Turn off fullscreen mode if active
             if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
                 if (document.exitFullscreen) {
                     document.exitFullscreen();
