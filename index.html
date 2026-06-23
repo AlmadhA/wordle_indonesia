@@ -189,26 +189,6 @@
             padding: 10px 20px; border-radius: 5px; font-weight: bold;
             z-index: 10; opacity: 0; transition: opacity 0.2s ease-in-out; pointer-events: none;
         }
-
-        /* SCREEN 3: BLUE SCREEN SURPRISE (BSOD) */
-        #bsod-screen {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #0078d7;
-            color: white;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            padding: 10% 15%;
-            box-sizing: border-box;
-            z-index: 200;
-            cursor: none; /* Hide cursor for more panic */
-        }
-
-        #bsod-screen .sad-face { font-size: 8rem; margin: 0; font-weight: 300; }
-        #bsod-screen h2 { font-size: 2rem; font-weight: 400; margin: 20px 0; line-height: 1.4; }
-        #bsod-screen p { font-size: 1.1rem; line-height: 1.6; max-width: 800px; color: #f0f0f0; }
-        #bsod-screen .info-section { margin-top: 40px; display: flex; gap: 30px; font-size: 0.95rem; }
-        #bsod-screen .qr-dummy { width: 90px; height: 90px; background-color: white; border: 4px solid white; display:flex; align-items:center; justify-content:center; color: black; font-weight:bold; font-size:0.7rem; text-align:center;}
     </style>
 </head>
 <body>
@@ -247,25 +227,6 @@
         </div>
     </div>
 
-    <!-- SCREEN 3: BLUE SCREEN CRASH SURPRISE (BSOD) -->
-    <div id="bsod-screen" onclick="exitBsod()">
-        <div class="sad-face">:(</div>
-        <h2>Your device ran into a problem and needs to restart. We're just collecting some error info, and then we'll restart for you.</h2>
-        <p><span id="progress-text">0</span>% complete</p>
-        
-        <div class="info-section">
-            <div class="qr-dummy">WORDLE<br>CRASH</div>
-            <div>
-                <p style="margin: 0;">For more information about this issue and possible fixes, visit:</p>
-                <p style="margin: 5px 0 0 0; font-weight: bold; color: white;">https://github.com/kamu/wordle-indonesia</p>
-                <p style="margin: 15px 0 0 0; font-size: 0.85rem; color: #d0d0d0;">If you call a support person, give them this info:<br>
-                Stop Code: <span id="bsod-answer" style="font-weight: bold; color: white;">YOUR_GUESS_WAS_WRONG</span><br>
-                What failed: wordle_core.sys (Error_Row_6_Reached)</p>
-                <p style="margin-top: 20px; font-size: 0.8rem; color: #a0a0a0; font-style: italic;">(Click anywhere on the screen to return to the game)</p>
-            </div>
-        </div>
-    </div>
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
@@ -283,34 +244,131 @@
 
         // DAFTAR KATA BAKU KBBI (5 HURUF)
         const WORD_LIST = [
-            "SINAR", "HITAM", "BOSAN", "MAKAN", "RETAK", "PUTIH", "SURYA", "KABUR", "PINTU", "LAMPU", "GUSTI", "WAKTU", "CERITA",
-            "ABADI", "ABANG", "ABJAD", "ABSEN", "ACARA", "ACUAN", "ADALAH", "ADMIN", "AGAMA", "AGUNG", "AKHIR", "AKIBAT", "AKSES", 
-            "AKTIF", "AKTOR", "ALAMI", "ALARM", "ALBUM", "ALIBI", "ALIRAN", "ALTAR", "ALUMNI", "AMBIL", "AMBON", "AMPUH", "AMPUN", 
-            "ANGIN", "ANGKA", "ANTAR", "ANTIK", "ANTRE", "APRIL", "APUNG", "AREAL", "ARENA", "AROMA", "ARSIP", "ARTIS", "ARWAH", 
-            "ASING", "ASPAL", "ASPEK", "ASRAMA", "ASET", "ATLAS", "ATLET", "AUDIO", "AUDIT", "AULIA", "AURORA", "AUTIS", "BABAK", 
-            "BADAI", "BADAK", "BADAN", "BADUT", "BAGAI", "BAGAN", "BAGUS", "BAHAN", "BAHAS", "BAHAYA", "BAJAK", "BAJAK", "BAKTI", 
-            "BALAI", "BALAP", "BALAS", "BALIK", "BALOK", "BALON", "BAMBU", "BANAL", "BANDAR", "BANDO", "BANGSA", "BANGUN", "BANJIR", 
-            "BANTAL", "BANTU", "BANYAK", "BAPAK", "BARAK", "BARAT", "BARET", "BARIS", "BARON", "BASAH", "BASIS", "BASMI", "BASUH", 
-            "BATAK", "BATAL", "BATANG", "BATAS", "BATIK", "BATIN", "BATUK", "BAYAM", "BAYAR", "BEBAS", "BEBAN", "BECEK", "BEDAK", 
-            "BEDUG", "BEJANA", "BEKAL", "BEKAS", "BEKUK", "BELAH", "BELAI", "BELAS", "BELUT", "BENAK", "BENAM", "BENANG", "BENAR", 
-            "BENCI", "BENDA", "BENIH", "BENING", "BENSIN", "BENTUK", "BERAS", "BERAT", "BERES", "BESAR", "BESOK", "BETAH", "BETIS", 
-            "BETON", "BETUL", "BIAYA", "BIBIR", "BIBIT", "BICARA", "BIDAK", "BIDAN", "BIDIK", "BIJAK", "BIKIN", "BILAS", "BILIK", 
-            "BINER", "BIOLA", "BIOTA", "BISIK", "BISNIS", "BOBOK", "BOBOT", "BOCAH", "BOCOR", "BODOH", "BOGOR", "BOIKOT", "BOLEH", 
-            "BOLOS", "BONUS", "BORAX", "BOROK", "BOROS", "BOTAK", "BOTOL", "BRUTO", "BUANA", "BUANG", "BUAYA", "BUBAR", "BUBUR", 
-            "BUDAK", "BUDAYA", "BUGAR", "BUGIS", "BUJUR", "BUKAN", "BUKTI", "BUKUM", "BULAN", "BULAT", "BUMBU", "BUMIP", "BUNGA", 
-            "BUNUH", "BUNYI", "BURAM", "BURSA", "BURUH", "BURUK", "BURUNG", "BUSUK", "BUSUR", "BUTIK", "BUTIR", "BUTUH", "BUYUT",
-            "CABAI", "CABUT", "CACAH", "CACAR", "CACAT", "CADAR", "CADAS", "CAGAK", "CAGAR", "CAHAYA", "CAIRAN", "CAKAP", "CAKAR", 
-            "CAKRA", "CALON", "CAMAT", "CAMPUR", "CANDI", "CANDU", "CANTIK", "CAPAI", "CAPEK", "CATAT", "CATUR", "CAWAN", "CEBOL", 
-            "CEBUR", "CECAK", "CEDERA", "CEGAH", "CEKIK", "CELAH", "CELAK", "CELANA", "CELUP", "CEMAR", "CEMAS", "CEPAT", "CERAH", 
-            "CERAI", "CERDIK", "CERNA", "CERITA", "CETAK", "CETEK", "CETUS", "CICIL", "CICIP", "CINCIN", "CINTA", "CIPTA", "CITRA", 
-            "COBAAN", "COCOK", "COLEK", "COLOK", "COPET", "COPOT", "CORAK", "CORET", "CORONG", "COWOK", "CUACA", "CUBIT", "CUCIAN", 
-            "CUCUK", "CUCUR", "CUKAI", "CUKUP", "CUKUR", "CUMAAN", "CURUT", "CUNAM", "CUPAK", "CURAH", "CURAM", "CURANG", "CULAS", 
-            "DADAK", "DADAR", "DAGING", "DAERAH", "DAFTAR", "DAGING", "DAHAK", "DAHAN", "DAHULU", "DANAU", "DAMAI", "DAMAR", "DAMPAK", 
-            "DANAU", "DAPAT", "DAPUR", "DARAH", "DARAT", "DARURAT", "DASAR", "DATANG", "DATAR", "DATUK", "DAUNAN", "DAWAI", "DOYAN", 
-            "DAYAK", "DAYUNG", "DEBAT", "DEBIT", "DEBUK", "DEBUR", "DEBUS", "DEFIK", "DEKAP", "DEKAT", "DEKOR", "DEKRET", "DELIK", 
-            "DEMAM", "DEMI-", "DENAH", "DENDA", "DENGAN", "DENGAR", "DEPAN", "DERAJAT", "DERAK", "DERAP", "DERAS", "DERET", "DERITA", 
-            "DESAH", "DESAK", "DESAIN", "DESAR", "DESER", "DESIR", "DETAK", "DETAIL", "DETIK", "DEWA-", "DEWAN", "DEWASA", "DINAR", 
-            "DIAN-", "DIDIK", "DINDING", "DINGIN", "DINAS", "DIPLOM", "DISKO", "DISKON", "DISKUS", "DISRE", "DIVISI", "DOAAN", "DODOL"
+            "ABADI", "ABANG", "ABSEN", "ACARA", "ADUAN", "AGAMA", "AKHIR", "AKSES",
+            "AKTIF", "AKTOR", "ALARM", "ALBUM", "ALIBI", "AMBIL", "AMPAS", "AMPUH",
+            "AMPUN", "ANCAM", "ANEKA", "ANGAN", "ANGIN", "ANGKA", "ANTAR", "ANTRE",
+            "ANYAM", "APRIL", "ARENA", "AROMA", "ARSIP", "ARTIS", "ARWAH", "ASING",
+            "ASPAL", "ATLET", "AUDIT", "BABAK", "BABAT", "BACOK", "BADAI", "BADAN",
+            "BADUT", "BAGAI", "BAGAN", "BAGUS", "BAHAN", "BAHAS", "BAKAR", "BAKAT",
+            "BAKSO", "BAKTI", "BALAP", "BALAS", "BALIK", "BALOK", "BALON", "BAMBU",
+            "BANTU", "BAPAK", "BARAT", "BARET", "BARIS", "BARON", "BASAH", "BASMI",
+            "BASUH", "BATAL", "BATAS", "BATIK", "BATIN", "BATUK", "BAYAM", "BAYAR",
+            "BEBAN", "BEBAS", "BECEK", "BEDAH", "BEKAL", "BEKAS", "BEKUK", "BELAH",
+            "BELAI", "BENAK", "BENAM", "BENAR", "BENCI", "BENDA", "BENIH", "BERAS",
+            "BERAT", "BERES", "BESAR", "BESOK", "BETAH", "BETIS", "BETON", "BETUL",
+            "BIARA", "BIAYA", "BIBIR", "BIBIT", "BIDAK", "BIDAN", "BIDIK", "BIJAK",
+            "BIKIN", "BILAS", "BINAR", "BIOLA", "BISIK", "BOBOL", "BOBOT", "BOCAH",
+            "BOCOR", "BODOH", "BOLOS", "BONUS", "BOROS", "BOSAN", "BOTAK", "BOTOL",
+            "BUANG", "BUAYA", "BUBAR", "BUBUR", "BUDAK", "BUGAR", "BUJUK", "BUKAN",
+            "BUKIT", "BUKTI", "BULAN", "BULAT", "BUMBU", "BUNGA", "BUNTU", "BUNUH",
+            "BUNYI", "BURAM", "BURSA", "BURUH", "BURUK", "BUSUK", "BUTIR", "BUTUH",
+            "CABAI", "CABUT", "CACAH", "CACAR", "CACAT", "CADAS", "CAGAR", "CAKAP",
+            "CAKAR", "CALON", "CAMAT", "CANDA", "CAPAI", "CAPEK", "CATAT", "CATUR",
+            "CAWAN", "CECAK", "CEGAH", "CEKIK", "CELAH", "CEMAR", "CEMAS", "CEPAT",
+            "CERAH", "CERAI", "CETAK", "CICIL", "CINTA", "CIPTA", "COCOK", "COLEK",
+            "CORAK", "CORET", "CUACA", "CUBIT", "CUKAI", "CUKUP", "CUKUR", "CURAH",
+            "CURAM", "DADAK", "DADAR", "DAHAK", "DAHAN", "DAKWA", "DAMAI", "DANAU",
+            "DANSA", "DAPAT", "DAPUR", "DARAH", "DARAT", "DASAR", "DATAR", "DATUK",
+            "DEBAT", "DEBIT", "DEBUR", "DEKAP", "DEKAT", "DEKOR", "DELTA", "DEMAM",
+            "DENAH", "DENDA", "DEPAN", "DERAI", "DERAP", "DERAS", "DERET", "DESAH",
+            "DESAK", "DETAK", "DETIK", "DEWAN", "DIDIH", "DIDIK", "DOMBA", "DOSEN",
+            "DRAMA", "DUDUK", "DUKUN", "DUNIA", "DUSTA", "DUSUN", "EJAAN", "ELANG",
+            "EMAIL", "EMBER", "EMBUN", "EMOSI", "EMPAT", "ENDAP", "ENTAH", "ETIKA",
+            "ETNIS", "FAKTA", "FATWA", "FOKUS", "FOSIL", "GADIS", "GADUH", "GAGAH",
+            "GAGAL", "GAGAP", "GAJAH", "GALAU", "GAMIS", "GANDA", "GANTI", "GARAM",
+            "GARIS", "GARPU", "GARUK", "GATAL", "GELAP", "GELAR", "GELAS", "GEMAR",
+            "GEMPA", "GEMUK", "GERAH", "GERAK", "GERAM", "GESEK", "GIGIH", "GIGIT",
+            "GITAR", "GOSIP", "GOSOK", "GRASI", "GUGAT", "GUGUR", "GUMAM", "GURAU",
+            "GURUN", "GUYUR", "HABIS", "HADAP", "HADIR", "HAFAL", "HAJAR", "HAKIM",
+            "HALAL", "HALAU", "HALUS", "HAMIL", "HAMPA", "HANTU", "HANYA", "HARAM",
+            "HARAP", "HARGA", "HARTA", "HARUM", "HASIL", "HASUT", "HEBAT", "HEMAT",
+            "HENTI", "HEWAN", "HIBAH", "HIBUR", "HIDUP", "HIJAB", "HIJAU", "HILIR",
+            "HIRUP", "HISAP", "HITAM", "HUJAN", "HUKUM", "HUTAN", "IBLIS", "IDEAL",
+            "IKLAN", "IKLIM", "IKRAR", "IMBAL", "IMBAS", "IMBAU", "IMLEK", "IMPOR",
+            "INDAH", "INDRA", "INDUK", "INFAK", "INGAT", "INGIN", "INJIL", "INTAN",
+            "INTIM", "IRAMA", "ISTRI", "JABAT", "JAGAT", "JAHAT", "JAHIT", "JAJAL",
+            "JAJAN", "JAKET", "JAKSA", "JALAN", "JALUR", "JAMAK", "JAMIN", "JAMUR",
+            "JANJI", "JARAH", "JARAK", "JATUH", "JEBAK", "JEGAL", "JELAS", "JELEK",
+            "JEMUR", "JENIS", "JENUH", "JEPIT", "JERAT", "JERIH", "JERIT", "JIJIK",
+            "JILAT", "JODOH", "JUARA", "JUDUL", "JUJUR", "JURUS", "KABAR", "KABEL",
+            "KABUR", "KABUT", "KACAU", "KADAR", "KAGUM", "KAKAK", "KAKEK", "KALAH",
+            "KALAU", "KAMAR", "KANAN", "KAPAK", "KAPAL", "KAPAS", "KAPUK", "KAPUR",
+            "KARAM", "KARAT", "KARIR", "KARTU", "KARYA", "KASAR", "KASIH", "KASUR",
+            "KATUP", "KEBAL", "KEBUN", "KECAM", "KECIL", "KECUP", "KEDAP", "KEDIP",
+            "KEDUA", "KEJAM", "KEJAR", "KEJUT", "KELAM", "KELAR", "KELAS", "KEMAS",
+            "KENAL", "KEPAL", "KERAH", "KERAK", "KERAS", "KERAT", "KERJA", "KERUH",
+            "KERUT", "KESAL", "KESAN", "KETAT", "KETUA", "KETUK", "KETUS", "KIBAR",
+            "KIKIR", "KILAT", "KIMIA", "KIPAS", "KIRIM", "KISAH", "KISAR", "KISUT",
+            "KLAIM", "KLIEN", "KOBAR", "KOKOH", "KOLAM", "KOLOM", "KOPER", "KORAN",
+            "KOREK", "KOTAK", "KOTOR", "KOYAK", "KUASA", "KUBUR", "KUKUH", "KUKUR",
+            "KULIT", "KUMAT", "KUMIS", "KUMUH", "KUNCI", "KUOTA", "KUPAS", "KURAS",
+            "KURSI", "KURUS", "KUTIL", "KUTIP", "KUTUK", "LAHAN", "LAHIR", "LAMAR",
+            "LAMPU", "LAPAR", "LAPIS", "LAPOR", "LARAS", "LARUT", "LATIH", "LAWAN",
+            "LAYAK", "LAYAR", "LEBAR", "LEBIH", "LEDAK", "LEGAM", "LEHER", "LELAH",
+            "LEMAH", "LEPAS", "LETIH", "LETUS", "LEVEL", "LEZAT", "LIANG", "LIBUR",
+            "LICIN", "LIDAH", "LIHAT", "LILIN", "LIPAT", "LIPUT", "LISAN", "LITER",
+            "LOGAM", "LOGIS", "LOKAL", "LOMBA", "LUDAH", "LUKIS", "LULUS", "LUMAT",
+            "LUMUT", "LUNAK", "LUNAS", "LURAH", "LURUH", "LURUS", "LUTUT", "MABUK",
+            "MACAM", "MACET", "MADYA", "MAHAL", "MAHIR", "MAJAL", "MAKAM", "MAKAN",
+            "MAKNA", "MALAM", "MALAS", "MAMPU", "MANDI", "MANIS", "MANJA", "MARAH",
+            "MASAK", "MASIH", "MASUK", "MEDAN", "MEDIA", "MEGAH", "MELAR", "MELON",
+            "MENIT", "MERAH", "MERAK", "MERDU", "MESIN", "MESRA", "MIMPI", "MINAT",
+            "MINTA", "MINUM", "MIRIP", "MITOS", "MOBIL", "MODAL", "MODEL", "MORAL",
+            "MOTOR", "MUARA", "MUDAH", "MUDIK", "MULAI", "MULIA", "MULUS", "MULUT",
+            "MURAH", "MURID", "MURNI", "MUSIK", "MUSIM", "NAFAS", "NAFSU", "NAHAS",
+            "NAJIS", "NAKAL", "NALAR", "NAMUN", "NANAS", "NANTI", "NASIB", "NATAL",
+            "NEKAT", "NENEK", "NIAGA", "NIKAH", "NILAI", "NIPIS", "NISAN", "NISTA",
+            "NOMOR", "NORMA", "NOVEL", "NUKIL", "NYALA", "NYATA", "NYEPI", "NYERI",
+            "NYIUR", "OASIS", "OBENG", "OBRAL", "OLENG", "OMBAK", "OMONG", "OPINI",
+            "OPLOS", "ORANG", "ORGAN", "PACAR", "PACUL", "PADAM", "PADAT", "PAGAR",
+            "PAGUT", "PAHAM", "PAHAT", "PAHIT", "PAJAK", "PAKAI", "PAKAN", "PAKET",
+            "PAKSA", "PAKTA", "PALSU", "PAMAN", "PAMER", "PAMIT", "PANAH", "PANAS",
+            "PANEN", "PANIK", "PANJI", "PARUH", "PASAK", "PASAR", "PASIR", "PASTA",
+            "PASTI", "PATAH", "PATOK", "PATRI", "PATUH", "PAWAI", "PECAH", "PECUT",
+            "PEDAS", "PEJAL", "PEJAM", "PEKAN", "PEKAT", "PELAN", "PELOR", "PELUH",
+            "PELUK", "PENAT", "PERAK", "PERAN", "PERAS", "PERIH", "PERLU", "PESAN",
+            "PESTA", "PETIR", "PIANO", "PIKAT", "PIKIR", "PILAR", "PILIH", "PINTU",
+            "PISAH", "PISAU", "POHON", "POKOK", "POLOS", "PROMO", "PUASA", "PUCAT",
+            "PUISI", "PUKAT", "PULAU", "PULIH", "PUNAH", "PUPUK", "PUPUS", "PUSAR",
+            "PUSAT", "PUTAR", "PUTIH", "PUTRA", "PUTRI", "PUTUS", "RACIK", "RACUN",
+            "RADAR", "RADIO", "RAGAM", "RAHIM", "RAJIN", "RAJUT", "RAKIT", "RAMAH",
+            "RAMAI", "RAPAT", "RAPUH", "RASUK", "RATAP", "RATAS", "RAUNG", "RAWAN",
+            "RAWAT", "REBAH", "REBUS", "REBUT", "REDAM", "REGUK", "REKAH", "REKAM",
+            "REKAT", "REKOR", "RELAI", "REMAS", "RENDA", "RESAH", "RESEP", "RESMI",
+            "RETAK", "RIANG", "RIBUT", "RIMBA", "RINCI", "RINDU", "RISAU", "ROBEK",
+            "ROBOH", "ROBOT", "ROKOK", "ROMAN", "RONDE", "ROSOK", "ROTAN", "RUANG",
+            "RUBUH", "RUMAH", "RUMIT", "RUMUS", "RUSAK", "RUSUH", "RUTIN", "SABAR",
+            "SABUN", "SADAR", "SAHAM", "SAHUR", "SAHUT", "SAKIT", "SAKSI", "SALAH",
+            "SALAM", "SALIB", "SALJU", "SALUR", "SAMPO", "SARAF", "SARAN", "SASAR",
+            "SAWAH", "SAYAP", "SAYUR", "SEBAB", "SEBAR", "SEBUT", "SEDAK", "SEDAP",
+            "SEDIA", "SEDIH", "SEGAR", "SEGEL", "SEHAT", "SEJUK", "SEKAT", "SELAM",
+            "SELAT", "SELIP", "SEMAK", "SEMUT", "SENIN", "SENJA", "SEPAH", "SEPAK",
+            "SERAK", "SERTA", "SESAK", "SETAN", "SETIA", "SETUP", "SIANG", "SIAPA",
+            "SIBUK", "SIDAK", "SIDIK", "SIFAT", "SIKAP", "SIKAT", "SIKSA", "SILAU",
+            "SILIH", "SIMAK", "SINAR", "SINIS", "SISIK", "SISIR", "SISWA", "SOBEK",
+            "SOPAN", "SORAK", "SOSOK", "SUAMI", "SUARA", "SUBUR", "SUDAH", "SUDUT",
+            "SUKAR", "SUKMA", "SULAM", "SULIT", "SUMUR", "SUNYI", "SURAT", "SURAU",
+            "SURGA", "SURUT", "SUSAH", "SUSUN", "SUSUT", "TABAH", "TABEL", "TABUH",
+            "TABUR", "TAHAP", "TAHUN", "TAJAM", "TAKUT", "TAMAN", "TAMAT", "TANAH",
+            "TANAM", "TANDA", "TANDU", "TANYA", "TAPAK", "TARIF", "TARIK", "TARUH",
+            "TATAP", "TAWAR", "TEBAK", "TEBAL", "TEDUH", "TEGAK", "TEGAS", "TEGUH",
+            "TEGUK", "TEKAD", "TEKAN", "TEKUN", "TELUK", "TELUR", "TEMAN", "TENTU",
+            "TENUN", "TEORI", "TEPAT", "TEPUK", "TERAS", "TERUS", "TETAP", "TETAS",
+            "TEWAS", "TIDAK", "TIDUR", "TIKAM", "TIKUS", "TIMBA", "TIMUR", "TINJU",
+            "TINTA", "TIRAI", "TITEL", "TITIK", "TOKOH", "TOLAK", "TOPIK", "TROFI",
+            "TUBUH", "TUDUH", "TUGAS", "TUKAR", "TULAR", "TULIS", "TUNAI", "TUNAS",
+            "TURUN", "TUSUK", "TUTUP", "UDARA", "UJANG", "UJIAN", "UJUNG", "ULAMA",
+            "ULANG", "ULTAH", "UMBAR", "UMPAN", "UMPAT", "UMRAH", "UNDUR", "UNTAI",
+            "URUNG", "USAHA", "USANG", "USUNG", "UTAMA", "UTANG", "UTARA", "VONIS",
+            "WABAH", "WADUK", "WAJAH", "WAJAR", "WAJIB", "WAKAF", "WAKTU", "WALAU",
+            "WANGI", "WARGA", "WARIS", "WARNA", "WARTA", "WASIT", "WAWAS", "WUJUD",
+            "YAKIN", "YATIM", "ZABUR", "ZAKAT", "ZALIM", "ZAMAN", "ZIKIR", "AJAIB",
+            "AKBAR", "AKRAB", "ALAMI", "BIASA", "PENUH", "ACUAN", "AGUNG", "ANYIR",
+            "BAKAL", "BEBEK", "BUBUH", "BUSUR", "CELUP", "CEPER", "CICAK", "DALIH",
+            "DESIR", "DIPAN", "DONOR", "ERANG", "EROSI", "FAJAR", "FAUNA", "FLORA",
+            "FRASA", "GADAI", "GASAK", "GAUNG", "GAYUT", "GETAR", "GETIR", "GILAS",
+            "GORES", "GUGUS", "GULAT", "GUMUL", "HIRAU", "HUNUS", "INCAR", "INTAI",
+            "JALIN", "JAMAH", "JEJAK", "JUBAH", "JUDES", "JUMPA", "KAGET", "KARIB"
         ];
         
         let secretWord = "";
@@ -551,8 +609,8 @@
             // JIKA KALAH (MENCAPAI ROW KE-6)
             if (currentRow === 5) {
                 gameOver = true;
-                // Kalah = tidak ada poin ditambahkan, tapi leaderboard tetap di-refresh
-                triggerBsod();
+                // Kalah = tidak ada poin ditambahkan, langsung kembali ke awal
+                backToStart();
                 return;
             }
 
@@ -560,50 +618,21 @@
             currentTile = 0;
         }
 
-	// TRIGGER BLUE SCREEN OF DEATH (BSOD) + FORCE FULLSCREEN
-        function triggerBsod() {
-            document.getElementById("bsod-answer").textContent = `THE_ANSWER_WAS_${secretWord}`;
-            const bsodScreen = document.getElementById("bsod-screen");
-            bsodScreen.style.display = "block";
+	// KALAH: TAMPILKAN JAWABAN SEBENTAR, LALU KEMBALI KE WELCOME SCREEN DARI AWAL
+        function backToStart() {
+            showMessage(`Game Over! The word was: ${secretWord}`);
 
-            // TURN ON FULL SCREEN MODE
-            const docEl = document.documentElement;
-            if (docEl.requestFullscreen) {
-                docEl.requestFullscreen();
-            } else if (docEl.webkitRequestFullscreen) { /* Safari */
-                docEl.webkitRequestFullscreen();
-            } else if (docEl.msRequestFullscreen) { /* IE11 */
-                docEl.msRequestFullscreen();
-            }
+            setTimeout(() => {
+                // Sembunyikan game, tampilkan welcome screen lagi
+                document.getElementById("main-game").style.display = "none";
+                document.getElementById("welcome-overlay").style.display = "flex";
+                document.getElementById("player-name-input").value = "";
 
-            // Fake progress percentage animation
-            let progress = 0;
-            const progressText = document.getElementById("progress-text");
-            const interval = setInterval(() => {
-                progress += Math.floor(Math.random() * 20) + 5;
-                if (progress >= 100) {
-                    progress = 100;
-                    clearInterval(interval);
-                }
-                progressText.textContent = progress;
-            }, 400);
-        }
-
-        // EXIT BSOD & TURN OFF FULLSCREEN
-        function exitBsod() {
-            // Turn off fullscreen mode if active
-            if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
-                }
-            }
-
-            document.getElementById("bsod-screen").style.display = "none";
-            resetGame();
+                // Reset state permainan supaya bersih untuk sesi berikutnya
+                currentRow = 0;
+                currentTile = 0;
+                gameOver = false;
+            }, 2000);
         }
 
         function resetGame() {
